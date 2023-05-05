@@ -1,0 +1,24 @@
+﻿version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      # Log in to the ECR repository in your default region
+      $(aws ecr get-login --no-include-email)
+
+  build:
+    commands:
+      # Pull the image from the ECR repository
+      - docker pull public.ecr.aws/e4x7n7z3/tpnipserv:latest
+      - aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com     
+      - docker tag tpnipserv:latest ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/tpnipserv:latest
+  post_build:
+    commands:
+      - echo Pushing to ECR
+      - docker push ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/tpnipserv:latest
+      - printf '[{"name":"tpnipservcontainer","imageUri":"${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/tpnipserv:latest"}]' > imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
+
